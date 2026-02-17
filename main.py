@@ -36,4 +36,8 @@ def search_news(q: str, limit: int = 5):
     return {"query": q, "results": results}
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    import os
+    # Render provides a PORT environment variable. If it's not there, use 8000.
+    port = int(os.environ.get("PORT", 8000))
+    # Use 0.0.0.0 so it's accessible externally
+    uvicorn.run(app, host="0.0.0.0", port=port)
