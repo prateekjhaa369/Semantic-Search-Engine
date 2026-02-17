@@ -1,57 +1,209 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Mini-Google Finance</title>
+    <meta charset="UTF-8">
+    <title>TERMINAL - Financial Semantic Search</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; background-color: #f8f9fa; }
-        .search-box { width: 100%; padding: 15px; font-size: 18px; border-radius: 25px; border: 1px solid #dfe1e5; outline: none; box-shadow: 0 1px 6px rgba(32,33,36,.28); }
-        .result { background: white; padding: 20px; margin-top: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .title { color: #1a0dab; font-size: 20px; text-decoration: none; font-weight: bold; }
-        .url { color: #006621; font-size: 14px; margin-bottom: 5px; }
-        .desc { color: #4d5156; font-size: 16px; margin-top: 5px; }
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            color: #00d4ff; /* Cyber Blue */
+            font-family: 'Courier New', Courier, monospace;
+            overflow-x: hidden;
+        }
+
+        /* Matrix Rain Canvas */
+        #canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.4;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+            position: relative;
+        }
+
+        h1 {
+            text-align: center;
+            text-shadow: 0 0 15px #00d4ff;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            color: #b3f0ff;
+        }
+
+        .search-container {
+            position: sticky;
+            top: 20px;
+            z-index: 100;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 15px;
+            background: rgba(0, 5, 15, 0.9);
+            border: 2px solid #00d4ff;
+            color: #00d4ff;
+            font-size: 1.2rem;
+            outline: none;
+            border-radius: 5px;
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.4);
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .search-box:focus {
+            box-shadow: 0 0 25px rgba(0, 212, 255, 0.8);
+            background: rgba(0, 10, 30, 0.95);
+        }
+
+        .result {
+            background: rgba(0, 10, 20, 0.85);
+            border: 1px solid #00d4ff;
+            padding: 20px;
+            margin-top: 25px;
+            border-radius: 4px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .result:hover {
+            background: rgba(0, 20, 40, 0.95);
+            transform: scale(1.02);
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+        }
+
+        .title {
+            color: #e6f9ff;
+            font-size: 22px;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(0, 212, 255, 0.5);
+        }
+
+        .url {
+            color: #007399;
+            font-size: 12px;
+            word-break: break-all;
+        }
+
+        .desc {
+            color: #80e5ff;
+            margin-top: 10px;
+            line-height: 1.6;
+        }
+
+        .metadata {
+            margin-top: 15px;
+            font-size: 0.8rem;
+            color: #0099cc;
+            border-top: 1px solid rgba(0, 212, 255, 0.2);
+            padding-top: 10px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .loader {
+            text-align: center;
+            padding: 20px;
+            font-weight: bold;
+            text-shadow: 0 0 10px #00d4ff;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
     </style>
 </head>
 <body>
-    <h1 style="text-align:center">🔍 Financial Semantic Search</h1>
-    <input type="text" id="query" class="search-box" placeholder="Search for market meaning (e.g. 'fed rates')..." onkeypress="if(event.key === 'Enter') doSearch()">
-    <div id="results"></div>
+    <canvas id="canvas"></canvas>
+
+    <div class="container">
+        <h1>SEMANTIC_RECON</h1>
+        <div class="search-container">
+            <input type="text" id="query" class="search-box" 
+                   placeholder="ENTER SECURE QUERY (e.g. 'market volatility')..." 
+                   onkeypress="if(event.key === 'Enter') doSearch()">
+        </div>
+        <div id="results"></div>
+    </div>
 
     <script>
-        async function doSearch() {
-    const q = document.getElementById('query').value;
-    const resDiv = document.getElementById('results');
-    
-    // 1. Show a professional loading state
-    resDiv.innerHTML = `<div style="text-align:center; padding:20px;">
-        <p>Searching the Vector Vault... 🧠</p>
-    </div>`;
-    
-    try {
-        const response = await fetch(`http://127.0.0.1:8000/search?q=${q}`);
-        const data = await response.json();
-        
-        resDiv.innerHTML = "";
-        
-        // 2. Handle 'No Results' gracefully
-        if (!data.results || data.results.length === 0) {
-            resDiv.innerHTML = "<p style='text-align:center;'>No relevant news found for that meaning.</p>";
-            return;
-        }
+        // --- MATRIX RAIN ANIMATION (BLUE VARIATION) ---
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
 
-        data.results.forEach(item => {
-            resDiv.innerHTML += `
-                <div class="result">
-                    <div class="url">${item.url}</div>
-                    <a class="title" href="${item.url}" target="_blank">${item.title}</a>
-                    <p class="desc">${item.description || "No description available."}</p>
-                    <small style="color:#70757a;">Published: ${new Date(item.published_at).toLocaleDateString()}</small>
-                </div>
-            `;
-        });
-    } catch (err) {
-        resDiv.innerHTML = "<p style='color:red;'>Connection Error: Is the FastAPI server running?</p>";
-    }
-}
+        canvas.height = window.innerHeight;
+        canvas.width = window.innerWidth;
+
+        const letters = "01010101010101010101"; // Using binary for a cleaner blue look
+        const fontSize = 16;
+        const columns = canvas.width / fontSize;
+        const drops = Array(Math.floor(columns)).fill(1);
+
+        function drawMatrix() {
+            ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = "#00d4ff"; // Bright Cyan/Blue
+            ctx.font = fontSize + "px monospace";
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = letters.charAt(Math.floor(Math.random() * letters.length));
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            }
+        }
+        setInterval(drawMatrix, 40);
+
+        // --- SEARCH LOGIC ---
+        async function doSearch() {
+            const q = document.getElementById('query').value;
+            const resDiv = document.getElementById('results');
+            
+            resDiv.innerHTML = `<div class="loader">> ACCESSING ENCRYPTED VECTOR VAULT...</div>`;
+            
+            try {
+                const response = await fetch(`http://127.0.0.1:8000/search?q=${q}`);
+                const data = await response.json();
+                
+                resDiv.innerHTML = "";
+                
+                if (!data.results || data.results.length === 0) {
+                    resDiv.innerHTML = "<div class='result'>ERROR: NO DATA MATCHES IN VECTOR SPACE.</div>";
+                    return;
+                }
+
+                data.results.forEach((item, index) => {
+                    setTimeout(() => {
+                        const div = document.createElement('div');
+                        div.className = 'result';
+                        div.innerHTML = `
+                            <div class="url">ENCRYPTED_SRC: ${item.url}</div>
+                            <a class="title" href="${item.url}" target="_blank">> ${item.title}</a>
+                            <div class="desc">${item.description || "NO_DESCRIPTION_DECODED"}</div>
+                            <div class="metadata">AUTH_DATE: ${item.published_at} | SIMILARITY_RANK: 0${index + 1}</div>
+                        `;
+                        resDiv.appendChild(div);
+                    }, index * 150); // Slightly slower stagger for effect
+                });
+            } catch (err) {
+                resDiv.innerHTML = "<div class='result' style='color:#ff4d4d;'>CRITICAL ERROR: CONNECTION TO MAIN_FRAME SEVERED.</div>";
+            }
+        }
     </script>
 </body>
 </html>
